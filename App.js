@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
+import notifee, { AndroidImportance } from '@notifee/react-native';
 
 export default function App() {
 
@@ -14,7 +15,8 @@ export default function App() {
 
   useEffect(() => {
     const unsubscribe = messaging().onMessage(async remoteMessage => {
-      console.log('A new FCM message arrived!', remoteMessage.notification);
+      onDisplayNotification(remoteMessage.notification)
+      console.log('A new FCM message arrived!', remoteMessage);
     });
 
     return unsubscribe;
@@ -22,7 +24,8 @@ export default function App() {
 
   // Register background handler
   messaging().setBackgroundMessageHandler(async remoteMessage => {
-    console.log('Message handled in the background!', remoteMessage.notification);
+    onDisplayNotification(remoteMessage.notification)
+    // console.log('Message handled in the background!', remoteMessage);
   });
 
   async function requestUserPermission() {
@@ -41,6 +44,41 @@ export default function App() {
     const newToken = await messaging().getToken();
     setToken(newToken);
     console.log("Token: " + newToken);
+  }
+
+  async function onDisplayNotification(notication) {
+    // Create a channel
+    const channelId = await notifee.createChannel({
+      // id: 'default',
+      id: 'important',
+      name: 'Default Channel',
+      vibration: true,
+      vibrationPattern: [300, 500],
+    });
+
+    // Display a notification
+    await notifee.displayNotification({
+
+      title: '<p style="color: #4caf50;"><b>'+notication.title+'</span></p></b></p> &#128576;',
+      subtitle: '&#129395;',
+      body:
+        '<p>'+notication.body+'</p> &#127881;!',
+      android: {
+        channelId,
+        importance: AndroidImportance.HIGH,
+        color: '#4caf50',
+        actions: [
+          {
+            title: '<b>Dance</b> &#128111;',
+            pressAction: { id: 'dance' },
+          },
+          {
+            title: '<p style="color: #f44336;"><b>Cry</b> &#128557;</p>',
+            pressAction: { id: 'cry' },
+          },
+        ],
+      },
+    });
   }
 
   return (
